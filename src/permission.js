@@ -10,7 +10,7 @@ NProgress.configure({ showSpinner: false }) // NProgress Configuration
 
 const whiteList = ['/login', '/auth-redirect'] // no redirect whitelist 没有重定向白名单
 //路由守卫
-router.beforeEach(async(to, from, next) => {
+router.beforeEach(async (to, from, next) => {
   // start progress bar
   NProgress.start()
 
@@ -34,19 +34,25 @@ router.beforeEach(async(to, from, next) => {
         try {
           // get user info
           // note: roles must be a object array! such as: ['admin'] or ,['developer','editor']
-          const { ID, roles } = await store.dispatch('user/getInfo')
+          const { ID, roles, active } = await store.dispatch('user/getInfo')
           const userinfo = { id: ID, roles: roles }
           // generate accessible routes map based on roles
+          if (active === 1) {
+            Message.error('您的账号未激活，请修改密码激活')
+            // await store.dispatch('user/resetToken')
+            next(`/profile/index`)
+            NProgress.done()
+          } else {
+            const accessRoutes = await store.dispatch('permission/generateRoutes', userinfo)
 
-          const accessRoutes = await store.dispatch('permission/generateRoutes', userinfo)
+            accessRoutes.push({ path: '*', redirect: '/404', hidden: true })
+            // dynamically add accessible routes
+            router.addRoutes(accessRoutes)
 
-          accessRoutes.push({ path: '*', redirect: '/404', hidden: true })
-          // dynamically add accessible routes
-          router.addRoutes(accessRoutes)
-
-          // hack method to ensure that addRoutes is complete
-          // set the replace: true, so the navigation will not leave a history record
-          next({ ...to, replace: true })
+            // hack method to ensure that addRoutes is complete
+            // set the replace: true, so the navigation will not leave a history record
+            next({ ...to, replace: true })
+          }
         } catch (error) {
           // remove token and go to login page to re-login
 
@@ -63,10 +69,10 @@ router.beforeEach(async(to, from, next) => {
     if (whiteList.indexOf(to.path) !== -1) {
       //在免费登录白名单，直接去
       next()
-    }else if(to.path === '/changePass'){
-      next({replace: true} )
+    } else if (to.path === '/changePass') {
+      next({ replace: true })
       // NProgress.done()
-    }else {
+    } else {
       // other pages that do not have permission to access are redirected to the login page.
       next(`/login?redirect=${to.path}`)
       NProgress.done()

@@ -53,9 +53,14 @@
         <el-table-column show-overflow-tooltip sortable prop="nickname" label="中文名" />
         <el-table-column show-overflow-tooltip sortable prop="givenName" label="花名" />
         <!-- 使用按钮方式展示，以后改成布尔参数比较合适 -->
-        <el-table-column label="状态" align="center">
+        <el-table-column label="在职状态" align="center">
           <template slot-scope="scope">
             <el-switch v-model="scope.row.status" :active-value="1" :inactive-value="2" @change="userStateChanged(scope.row)" />
+          </template>
+        </el-table-column>
+        <el-table-column label="激活状态" align="center">
+          <template slot-scope="scope">
+            <el-switch v-model="scope.row.active" :disabled="true" :active-value="2" :inactive-value="1" />
           </template>
         </el-table-column>
         <!-- <el-table-column show-overflow-tooltip sortable prop="status" label="状态" align="center">
